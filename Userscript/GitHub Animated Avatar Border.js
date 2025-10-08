@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         GitHub Animated Avatar Border
 // @namespace    http://tampermonkey.net/
-// @version      1.1
+// @version      1.2
 // @description  Добавляет анимированную рамку для аватарки на GitHub.
 // @downloadURL  https://github.com/smi-falcon/GitHub-Animated-Avatar-Border/raw/main/Userscript/GitHub%20Animated%20Avatar%20Border.js
 // @updateURL    https://github.com/smi-falcon/GitHub-Animated-Avatar-Border/raw/main/Userscript/GitHub%20Animated%20Avatar%20Border.js
@@ -56,67 +56,144 @@
     `;
     document.head.appendChild(style);
 
+    let myUsername = null;
+
+    function getMyUsername() {
+        if (myUsername) return myUsername;
+
+        const metaUser = document.querySelector('meta[name="user-login"]');
+        if (metaUser) {
+            myUsername = metaUser.getAttribute('content');
+            return myUsername;
+        }
+
+        const userNav = document.querySelector('[data-feature-category="user_nav"]');
+        if (userNav) {
+            const links = userNav.querySelectorAll('a');
+            for (let link of links) {
+                const href = link.getAttribute('href');
+                if (href && href.startsWith('/') && href !== '/') {
+                    const match = href.match(/^\/([^\/?]+)/);
+                    if (match && match[1]) {
+                        myUsername = match[1];
+                        return myUsername;
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    function isMyAvatar(avatar) {
+        const username = getMyUsername();
+        if (!username) return false;
+
+        const currentUrl = window.location.pathname;
+        const isMyProfile = currentUrl === `/${username}` || currentUrl.startsWith(`/${username}/`);
+
+        if (isMyProfile) {
+            const profileAvatars = document.querySelectorAll('.js-profile-editable-area img, .Layout-sidebar img.avatar, [itemprop="image"], .avatar.avatar-small, header img.avatar');
+            for (let profileAvatar of profileAvatars) {
+                if (profileAvatar === avatar) {
+                    return true;
+                }
+            }
+
+            if (avatar.closest('header') || avatar.closest('.Layout-header')) {
+                return true;
+            }
+
+            if (avatar.closest('[data-test-selector="profile-avatar"]')) {
+                return true;
+            }
+
+            return false;
+        }
+
+        const parentLink = avatar.closest('a');
+        if (parentLink) {
+            const href = parentLink.getAttribute('href');
+            if (href && href.startsWith(`/${username}`)) {
+                return true;
+            }
+        }
+
+        const altText = avatar.getAttribute('alt') || '';
+        if (altText.toLowerCase().includes(username.toLowerCase())) {
+            return true;
+        }
+
+        const hovercardParent = avatar.closest('[data-hovercard-type="user"]');
+        if (hovercardParent) {
+            const hovercardUrl = hovercardParent.getAttribute('data-hovercard-url');
+            if (hovercardUrl && hovercardUrl.includes(`/${username}`)) {
+                return true;
+            }
+        }
+
+        const repositoryHeader = avatar.closest('.Layout-header, .repohead, .gh-header');
+        if (repositoryHeader && isMyProfile) {
+            return true;
+        }
+
+        return false;
+    }
+
     function applyAnimatedBorder() {
         const avatarSelectors = [
-            'img.avatar-user',
             'img.avatar',
+            'img.avatar-user',
             '[data-hovercard-type="user"] img',
-            '.js-profile-editable-area img.avatar',
-            'img[alt*="avatar"]',
-            '.avatar img'
+            'header img.avatar',
+            '.Layout-header img.avatar',
+            '.avatar.avatar-small',
+            '[data-test-selector="profile-avatar"] img'
         ];
-
-        const allAvatars = new Set();
 
         avatarSelectors.forEach(selector => {
             const avatars = document.querySelectorAll(selector);
             avatars.forEach(avatar => {
-                if (avatar.tagName === 'IMG') {
-                    allAvatars.add(avatar);
+                if (avatar.tagName === 'IMG' &&
+                    !avatar.classList.contains('animated-border-applied') &&
+                    isMyAvatar(avatar)) {
+
+                    avatar.classList.add('animated-avatar-border');
+                    avatar.classList.add('animated-border-applied');
+
+                    const observer = new MutationObserver(function(mutations) {
+                        mutations.forEach(function(mutation) {
+                            if (mutation.type === 'attributes' && mutation.attributeName === 'src') {
+                                setTimeout(() => {
+                                    if (!avatar.classList.contains('animated-avatar-border')) {
+                                        avatar.classList.add('animated-avatar-border');
+                                    }
+                                }, 100);
+                            }
+                        });
+                    });
+
+                    observer.observe(avatar, { attributes: true, attributeFilter: ['src'] });
                 }
             });
         });
 
-        allAvatars.forEach(avatar => {
-            if (!avatar.classList.contains('animated-border-applied')) {
-                avatar.classList.add('animated-avatar-border');
-                avatar.classList.add('animated-border-applied');
-
-                const observer = new MutationObserver(function(mutations) {
-                    mutations.forEach(function(mutation) {
-                        if (mutation.type === 'attributes' && mutation.attributeName === 'src') {
-                            setTimeout(() => {
-                                if (!avatar.classList.contains('animated-avatar-border')) {
-                                    avatar.classList.add('animated-avatar-border');
-                                }
-                            }, 100);
-                        }
-                    });
-                });
-
-                observer.observe(avatar, { attributes: true, attributeFilter: ['src'] });
-            }
-        });
-    }
-
-    function delayedApply() {
-        setTimeout(applyAnimatedBorder, 100);
+        const currentUrl = window.location.pathname;
+        if (currentUrl === '/settings/profile' || currentUrl === '/dashboard') {
+            const headerAvatars = document.querySelectorAll('header img.avatar, .AppHeader img.avatar, [data-test-selector="user-avatar"]');
+            headerAvatars.forEach(avatar => {
+                if (avatar.tagName === 'IMG' && !avatar.classList.contains('animated-border-applied')) {
+                    avatar.classList.add('animated-avatar-border');
+                    avatar.classList.add('animated-border-applied');
+                }
+            });
+        }
     }
 
     window.addEventListener('load', applyAnimatedBorder);
 
-    const observer = new MutationObserver(function(mutations) {
-        let shouldApply = false;
-
-        mutations.forEach(function(mutation) {
-            if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-                shouldApply = true;
-            }
-        });
-
-        if (shouldApply) {
-            delayedApply();
-        }
+    const observer = new MutationObserver(function() {
+        applyAnimatedBorder();
     });
 
     observer.observe(document.body, {
@@ -125,6 +202,6 @@
     });
 
     applyAnimatedBorder();
-    setTimeout(applyAnimatedBorder, 500);
-    setTimeout(applyAnimatedBorder, 2000);
+    setTimeout(applyAnimatedBorder, 1000);
+    setTimeout(applyAnimatedBorder, 3000);
 })();
