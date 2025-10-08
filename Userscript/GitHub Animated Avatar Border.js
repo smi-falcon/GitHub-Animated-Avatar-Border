@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         GitHub Animated Avatar Border
 // @namespace    http://tampermonkey.net/
-// @version      1.0
+// @version      1.1
 // @description  Добавляет анимированную рамку для аватарки на GitHub.
 // @downloadURL  https://github.com/smi-falcon/GitHub-Animated-Avatar-Border/raw/main/Userscript/GitHub%20Animated%20Avatar%20Border.js
 // @updateURL    https://github.com/smi-falcon/GitHub-Animated-Avatar-Border/raw/main/Userscript/GitHub%20Animated%20Avatar%20Border.js
@@ -61,42 +61,62 @@
             'img.avatar-user',
             'img.avatar',
             '[data-hovercard-type="user"] img',
-            '.js-profile-editable-area img.avatar'
+            '.js-profile-editable-area img.avatar',
+            'img[alt*="avatar"]',
+            '.avatar img'
         ];
 
-        let avatar = null;
-        for (const selector of avatarSelectors) {
-            avatar = document.querySelector(selector);
-            if (avatar) break;
-        }
+        const allAvatars = new Set();
 
-        if (avatar && !avatar.classList.contains('animated-border-applied')) {
-            const originalBorderRadius = avatar.style.borderRadius;
-            const originalPadding = avatar.style.padding;
-
-            avatar.classList.add('animated-avatar-border');
-            avatar.classList.add('animated-border-applied');
-
-            const observer = new MutationObserver(function(mutations) {
-                mutations.forEach(function(mutation) {
-                    if (mutation.type === 'attributes' && mutation.attributeName === 'src') {
-                        setTimeout(() => {
-                            if (!avatar.classList.contains('animated-avatar-border')) {
-                                avatar.classList.add('animated-avatar-border');
-                            }
-                        }, 100);
-                    }
-                });
+        avatarSelectors.forEach(selector => {
+            const avatars = document.querySelectorAll(selector);
+            avatars.forEach(avatar => {
+                if (avatar.tagName === 'IMG') {
+                    allAvatars.add(avatar);
+                }
             });
+        });
 
-            observer.observe(avatar, { attributes: true, attributeFilter: ['src'] });
-        }
+        allAvatars.forEach(avatar => {
+            if (!avatar.classList.contains('animated-border-applied')) {
+                avatar.classList.add('animated-avatar-border');
+                avatar.classList.add('animated-border-applied');
+
+                const observer = new MutationObserver(function(mutations) {
+                    mutations.forEach(function(mutation) {
+                        if (mutation.type === 'attributes' && mutation.attributeName === 'src') {
+                            setTimeout(() => {
+                                if (!avatar.classList.contains('animated-avatar-border')) {
+                                    avatar.classList.add('animated-avatar-border');
+                                }
+                            }, 100);
+                        }
+                    });
+                });
+
+                observer.observe(avatar, { attributes: true, attributeFilter: ['src'] });
+            }
+        });
+    }
+
+    function delayedApply() {
+        setTimeout(applyAnimatedBorder, 100);
     }
 
     window.addEventListener('load', applyAnimatedBorder);
 
     const observer = new MutationObserver(function(mutations) {
-        applyAnimatedBorder();
+        let shouldApply = false;
+
+        mutations.forEach(function(mutation) {
+            if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+                shouldApply = true;
+            }
+        });
+
+        if (shouldApply) {
+            delayedApply();
+        }
     });
 
     observer.observe(document.body, {
@@ -104,5 +124,7 @@
         subtree: true
     });
 
-    setTimeout(applyAnimatedBorder, 1000);
+    applyAnimatedBorder();
+    setTimeout(applyAnimatedBorder, 500);
+    setTimeout(applyAnimatedBorder, 2000);
 })();
