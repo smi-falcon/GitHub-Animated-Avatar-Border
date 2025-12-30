@@ -7,7 +7,6 @@
 
 [![Tampermonkey](https://img.shields.io/badge/Tampermonkey-Get-green?style=for-the-badge&logo=tampermonkey)](https://www.tampermonkey.net/)
 [![GitHub](https://img.shields.io/badge/GitHub-Script-orange?style=for-the-badge&logo=tampermonkey)](https://github.com/smi-falcon/GitHub-Animated-Avatar-Border/blob/main/Userscript/GitHub%20Animated%20Avatar%20Border.js)
-[![GreasyFork](https://img.shields.io/badge/Greasy%20Fork-Script-orange?style=for-the-badge&logo=tampermonkey)](https://update.greasyfork.org/scripts/551824/GitHub%20Animated%20Avatar%20Border.user.js)
 
 ## 🛠️ Настройка: ##
 
@@ -95,6 +94,9 @@ box-shadow: 0 0 5px #ВАШ_ЦВЕТ, 0 0 10px #ВАШ_ЦВЕТ, 0 0 15px #ВА�
 - Microsoft Edge
 - Mozilla Firefox
 - Safari
+
+## ⭐ Поддержка проекта: ##
+Если вам понравился данный проект, поставьте ему звезду на GitHub.
 
 ## 📄 Лицензия: ##
 
