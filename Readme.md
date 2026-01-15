@@ -6,7 +6,7 @@
 ## 📝 Установка: ##
 
 [![Tampermonkey](https://img.shields.io/badge/Tampermonkey-Get-green?style=for-the-badge&logo=tampermonkey)](https://www.tampermonkey.net/)
-[![GitHub](https://img.shields.io/badge/GitHub-Script-orange?style=for-the-badge&logo=tampermonkey)](https://github.com/smi-falcon/GitHub-Animated-Avatar-Border/blob/main/Userscript/GitHub%20Animated%20Avatar%20Border.js)
+[![GitHub](https://img.shields.io/badge/GitHub-Script-orange?style=for-the-badge&logo=tampermonkey)](https://raw.githubusercontent.com/smi-falcon/GitHub-Animated-Avatar-Border/refs/heads/main/Userscript/GitHub%20Animated%20Avatar%20Border.js)
 
 ## 🛠️ Настройка: ##
 
